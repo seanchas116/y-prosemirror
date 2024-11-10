@@ -40,6 +40,7 @@ export const yUndoPlugin = ({ protectedNodes = defaultProtectedNodes, trackedOri
         captureTransaction: tr => tr.meta.get('addToHistory') !== false
       })
       return {
+        ownsUndoManager: !undoManager,
         undoManager: _undoManager,
         prevSel: null,
         hasUndoOps: _undoManager.undoStack.length > 0,
@@ -75,7 +76,7 @@ export const yUndoPlugin = ({ protectedNodes = defaultProtectedNodes, trackedOri
   },
   view: view => {
     const ystate = ySyncPluginKey.getState(view.state)
-    const undoManager = yUndoPluginKey.getState(view.state).undoManager
+    const {undoManager, ownsUndoManager} = yUndoPluginKey.getState(view.state)
     undoManager.on('stack-item-added', ({ stackItem }) => {
       const binding = ystate.binding
       if (binding) {
@@ -90,7 +91,9 @@ export const yUndoPlugin = ({ protectedNodes = defaultProtectedNodes, trackedOri
     })
     return {
       destroy: () => {
-        undoManager.destroy()
+        if (ownsUndoManager) {
+          undoManager.destroy()
+        }
       }
     }
   }
